@@ -88,11 +88,7 @@
 path.line {
   fill: none;
   stroke: blue;
-  stroke-width: 1.5px;
-}
-
-path.area {
-  fill: #e7e7e7;
+  stroke-width: 0.5px;
 }
 
 .axis {
@@ -102,11 +98,13 @@ path.area {
 .axis text {
         font-family: sans-serif;
         font-size: 11px;
+        fill: #A9A9A9;
 }
 
 
+
 .x.axis line {
-  stroke: #000;
+  stroke: #A9A9A9;
    fill:none;
 }
 
@@ -116,18 +114,22 @@ path.area {
 
 .x.axis path {
   fill:none;
-  stroke: #000;
+  stroke: #A9A9A9;
 }
 
 .y.axis line, .y.axis path {
+  stroke: #A9A9A9;
   fill: none;
-  stroke: #000;
 }
+
+.y.axis path{
+  stroke-width: 1px;
+}
+
 .guideline {
   margin-right: 100px;
   float: right;
 }
-
 
 </style>
 <body>
@@ -154,7 +156,7 @@ var path, geoData, color, solarData, projection, solar ;
 var timeFormat = d3.time.format("%m/%d/%Y %H:%M");
 
 var startDate = new Date(2008,0),
-    endDate   = new Date(2015,9) ;
+    endDate   = new Date(2015,0) ;
 
 var startNum = +startDate,
     endNum = +endDate ;
@@ -187,11 +189,11 @@ var textMonth = svg.append("text")
 //----------------------------------------------------------------
 // Necessary Setting for Line Chart  /////////////////////////////
 //----------------------------------------------------------------
-var line_margin = {top:20,right:50,bottom:20,left:50},
-    line_width = 296-line_margin.left-line_margin.right,
-    line_height = 150 - line_margin.top - line_margin.bottom;
+var line_margin = {top:20,right:30,bottom:20,left:50},
+    line_width = 254-line_margin.left-line_margin.right,
+    line_height = 200 - line_margin.top - line_margin.bottom;
 
-var line_startX = 404,
+var line_startX = 446,
     line_startY = 0;
 
 var parseTime = d3.time.format("%e-%b-%Y").parse;
@@ -201,6 +203,7 @@ var line_x = d3.time.scale().range([0,line_width]),
 
 
 var line = d3.svg.line()
+    .interpolate("monotone")
     .x(function(d) { return line_x(d.date); })
     .y(function(d) { return line_y(d.number); });
 
@@ -351,10 +354,10 @@ var values = data.filter(function(d){
 line_x.domain([d3.min(values,function(d){return d.date;}),d3.max(values,function(d){return d.date;})]);
 line_y.domain([0,d3.max(values,function(d){return d.number;})]).nice();
 
+
 var line_xAxis = d3.svg.axis().orient("bottom").scale(line_x)
                  .tickValues([line_x.domain()[0],
                               new Date("1-Jan-2011"),new Date("1-Jan-2013"),new Date("1-Jan-2015")])
-             //     .ticks(4)
                   .tickFormat(function(d){
                     return tickTimeFormat(d);
                   }),
@@ -403,22 +406,29 @@ var line_xAxis = d3.svg.axis().orient("bottom").scale(line_x)
     .attr('transform', 'rotate(180)')
     .style('fill', '#ffffff');
 
+  line_svg.append("text")
+          .attr("text-anchor","middle")
+          .attr("transform","translate("+(line_width+23)+","+(line_height/2)+")rotate(-90)")
+          .text("Installed Solar Arrays")
+          .style("font-size","11px")
+          .style("font-family","sans-serif")
+          .style("fill","#A9A9A9");
+
 //---------------------------------------------------------------
 // Line Chart Ends
 //---------------------------------------------------------------
- var playButton = svg.append("g")
-        .on("click",function(){
-          plotSolar();
-          plotLine();
-        }) ;
-      
-      playButton.append("rect")
+restart = 0;
+
+var playButton = svg.append("g").attr("id","playButton");
+
+        playButton.append("rect")
         .attr("class","button")
         .attr("x",bX)
         .attr("y",bY)
         .attr("width",bWidth)
         .attr("height",bHeight)
         .attr("rx",rx) ;
+
 
       playButton.append("text")
         .attr("x",bX + bdx)
@@ -431,6 +441,19 @@ var line_xAxis = d3.svg.axis().orient("bottom").scale(line_x)
         .style('pointer-events', 'none')
         .style("-webkit-user-select", "none")
         .text("start") ;
+
+console.log(d3.select("playButton"))
+
+ playButton.on("click",function(){
+          plotSolar();
+          plotLine();
+          restart = 1;
+          if (restart==1){
+              d3.select("#playButton rect").attr("width",bWidth+15);
+              d3.select("#playButton text").text("restart");
+                    }
+        }) ;
+
 
 function plotLine(){
   d3.select('.curtain').remove();
