@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style type="text/css">
+  .text {
+    font-family: "Helvetica Neue", sans-serif;
+    font-weight: 500 ;
+    fill: #ddd;
+
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+
+  .yearText {
+      font-size: 60px ;
+  }
+
+  .monthText {
+      font-size: 30px ;
+  }
+
+  .buttonText {
+    font-size: 14px ;
+    fill: white;
+    font-family: sans-serif;
+    font-weight: 300 ;
+  }
+
+  .button {
+    fill: red;
+  }
+
+.pace {
+  -webkit-pointer-events: none;
+  pointer-events: none;
+
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+
+  z-index: 2000;
+  position: fixed;
+  margin: auto;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 5px;
+  width: 200px;
+  background: #fff;
+  border: 1px solid #1abe71;
+
+  overflow: hidden;
+}
+
+.pace .pace-progress {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  -ms-box-sizing: border-box;
+  -o-box-sizing: border-box;
+  box-sizing: border-box;
+
+  -webkit-transform: translate3d(0, 0, 0);
+  -moz-transform: translate3d(0, 0, 0);
+  -ms-transform: translate3d(0, 0, 0);
+  -o-transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0);
+
+  max-width: 200px;
+  position: fixed;
+  z-index: 2000;
+  display: block;
+  position: absolute;
+  top: 0;
+  right: 100%;
+  height: 100%;
+  width: 100%;
+  background: #1abe71;
+}
+
+.pace.pace-inactive {
+  display: none;
+}
+
+path.line {
+  fill: none;
+  stroke: blue;
+  stroke-width: 1.5px;
+}
+
+path.area {
+  fill: #e7e7e7;
+}
+
+.axis {
+  shape-rendering: crispEdges;
+}
+
+.axis text {
+        font-family: sans-serif;
+        font-size: 11px;
+}
+
+
+.x.axis line {
+  stroke: #000;
+   fill:none;
+}
+
+.x.axis .minor {
+  stroke-opacity: .5;
+}
+
+.x.axis path {
+  fill:none;
+  stroke: #000;
+}
+
+.y.axis line, .y.axis path {
+  fill: none;
+  stroke: #000;
+}
+.guideline {
+  margin-right: 100px;
+  float: right;
+}
+
+
+</style>
+<body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/1.6.19/topojson.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/pace.min.js"></script>
+<script>
+
+var width = 700,
+    height = 600;
+
+var svg = d3.select("body")
+    .append("svg")
+    .attr("width", width)
+    .attr("height", height)
+    .attr("visibility","hidden")
+    .attr("id","mainsvg");
+
+var path, geoData, color, solarData, projection, solar ;
+
+//--------------------------------------
+// Stuff for solar permit data
+// Date format from CSV file: "4/5/06 7:28"
+var timeFormat = d3.time.format("%m/%d/%Y %H:%M");
+
+var startDate = new Date(2008,0),
+    endDate   = new Date(2015,9) ;
+
+var startNum = +startDate,
+    endNum = +endDate ;
+
+var dateInterp = d3.interpolateNumber(startNum, endNum) ;
+
+var monthNames = [
+        "January", "February", "March",
+        "April", "May", "June", "July",
+        "August", "September", "October",
+        "November", "December"
+    ];
+
+var xLoc = 25,
+    yLoc = 80,
+    yDiff = 30 ;
+var textYear = svg.append("text")
+            .attr("x",xLoc)
+            .attr("y",yLoc)
+            .classed("yearText text",true)
+            .text(startDate.getFullYear().toString())
+            .attr('visibility','hidden') ;
+var textMonth = svg.append("text")
+            .attr("x",xLoc)
+            .attr("y",yLoc + yDiff)
+            .classed("monthText text",true)
+            .text(monthNames[startDate.getMonth()])
+            .attr('visibility','hidden') ;
+
+//----------------------------------------------------------------
+// Necessary Setting for Line Chart  /////////////////////////////
+//----------------------------------------------------------------
+var line_margin = {top:20,right:50,bottom:20,left:50},
+    line_width = 296-line_margin.left-line_margin.right,
+    line_height = 150 - line_margin.top - line_margin.bottom;
+
+var line_startX = 404,
+    line_startY = 0;
+
+var parseTime = d3.time.format("%e-%b-%Y").parse;
+
+var line_x = d3.time.scale().range([0,line_width]),
+    line_y = d3.scale.linear().range([line_height,0]);
+
+
+var line = d3.svg.line()
+    .x(function(d) { return line_x(d.date); })
+    .y(function(d) { return line_y(d.number); });
+
+var tickTimeFormat = d3.time.format("%Y");
+
+//------------------------------------------------------------------
+// Necessary Setting for Line Chart Ends ///////////////////////////
+//------------------------------------------------------------------
+
+
+d3.json("oahu.json", function(error, oahu) {
+  d3.csv("honolulu_matlab.csv", function(data_island) {
+    d3.csv("cumulativePermits_mengyang.csv",type,function(data){
+
+      textYear.attr('visibility','visible') ;
+      textMonth.attr('visibility','visible') ;
+
+      //----------------------------------------
+      // CREATE THE BASE POPULATION DENSITY MAP
+      //----------------------------------------
+      // create a first guess for the projection
+      geoData = topojson.feature(oahu,oahu.objects.oahu) ;
+
+      var center = d3.geo.centroid(geoData)
+      var scale  = 150;
+      var offset = [width/2, height/2];
+      projection = d3.geo.mercator()
+        .scale(scale)
+        .center(center)
+        .translate(offset);
+
+      // create the path
+      path = d3.geo.path()
+        .projection(projection);
+
+      // using the path determine the bounds of the current map and use 
+      // these to determine better values for the scale and translation
+
+      var bounds  = path.bounds(geoData);
+      var hscale  = scale*width  / (bounds[1][0] - bounds[0][0]);
+      var vscale  = scale*height / (bounds[1][1] - bounds[0][1]);
+      var scale   = (hscale < vscale) ? hscale : vscale;
+      var offset  = [width - (bounds[0][0] + bounds[1][0])/2,
+                        height - (bounds[0][1] + bounds[1][1])/2];
+
+      // new projection
+      projection = d3.geo.mercator()
+        .center(center)
+        .scale(scale*0.95)
+        .translate(offset);
+      path = path.projection(projection);
+
+      // Calculate the range of population values
+      var minVal = d3.min(geoData.features,function(currentValue,index) {
+        var population = currentValue.properties.population ;
+        var area = path.area(currentValue.geometry) ;
+        //console.log(population / area) ;
+        return population / area ;
+      }) ;
+
+      var maxVal = d3.max(geoData.features,function(currentValue,index) {
+        var population = currentValue.properties.population ;
+        var area = path.area(currentValue.geometry) ;
+        return population / area ;
+      }) ;
+
+      color = d3.scale.linear()
+                .domain([minVal, maxVal])
+                .range(["white", "red"]) ;
+
+      svg.selectAll("path")
+        .data(geoData.features)
+        .enter()
+        .append("path")
+        .attr("d", path)
+        .style("fill", function(d,i) {
+          var population = d.properties.population ;
+          var area = path.area(d.geometry) ;
+          ratio = population / area ;
+          return color(ratio) ;
+        })
+        .style("stroke-width", 0.5) ;
+        // .style("stroke", "grey");
+
+        svg.append("path")
+          .datum(topojson.merge(oahu, oahu.objects.oahu.geometries))
+          .attr("d", path)
+          .style('fill', 'none')
+          .style("stroke-width", 0.5)
+          .style("stroke", "black");
+
+        //---------------------------------------------------
+        // PLOT THE TIME-APPEARING LOCATIONS OF SOLAR ARRAYS
+        //---------------------------------------------------
+   
+        solarData = data_island.filter(function(d) {
+            if (d.id <= 40000) {
+                return true ;
+            }
+        })
+
+        console.log(data_island);
+
+        data_island.map(function(d,i) {
+            d.completeddate = +timeFormat.parse(d.completeddate);
+            return d ;
+        })
+
+        solar = svg.selectAll("circle")
+            .data(solarData)
+            .enter()
+            .append("circle")
+            .attr("cx", function(d) {
+                return projection([+d.Latitude, +d.Longitude])[0];
+            })
+            .attr("cy", function(d) {
+                return projection([+d.Latitude, +d.Longitude])[1];
+            })
+            .attr("r", 1.2)
+            .style("fill", "blue")
+            .attr("stroke","blue")
+            .attr("stroke-width",0)
+            .style("opacity", 0.25)
+            .attr("visibility","hidden")
+
+      // Start Button
+      var bX = 30, 
+          bY = 0.8*height,
+          bWidth = 45,
+          bHeight = 20 
+          bdx = 8,
+          rx = 5 ;
+
+
+      // Pace.stop() ;
+        Pace.on("done", function() {
+          svg.attr("visibility","visible") ;
+        })
+
+//-----------------------------------------------------------------------
+// Line Chart
+//-----------------------------------------------------------------------
+var values = data.filter(function(d){
+    diff = d.date.getTime() - (new Date("1-Jan-2007")).getTime();
+    if (diff>0){
+      return d.date;
+    }
+  })
+
+line_x.domain([d3.min(values,function(d){return d.date;}),d3.max(values,function(d){return d.date;})]);
+line_y.domain([0,d3.max(values,function(d){return d.number;})]).nice();
+
+var line_xAxis = d3.svg.axis().orient("bottom").scale(line_x)
+                 .tickValues([line_x.domain()[0],
+                              new Date("1-Jan-2011"),new Date("1-Jan-2013"),new Date("1-Jan-2015")])
+             //     .ticks(4)
+                  .tickFormat(function(d){
+                    return tickTimeFormat(d);
+                  }),
+
+    line_yAxis = d3.svg.axis().scale(line_y)
+                  .tickValues(line_y.domain())
+                  .orient("right");
+
+  var line_svg = d3.select("#mainsvg").append("svg")
+                   .attr("x",line_startX)
+                  .attr("y",line_startY)
+                  .attr("float","right")
+                  .attr("width",line_width+line_margin.left+line_margin.right)
+                  .attr("height",line_height+line_margin.top+line_margin.bottom)
+                  .attr("id","linesvg")
+                  .append("g").attr("transform","translate("+ line_margin.left+","+ line_margin.top+")");
+
+
+  line_svg.append("g")
+          .attr("class","x axis")
+          .attr("transform","translate(0,"+line_height+")")
+          .call(line_xAxis);
+
+  line_svg.append("g")
+          .attr("class","y axis")
+          .attr("transform","translate("+ line_width+",0)")
+          .call(line_yAxis)
+          .selectAll("text")
+          .attr("y",10)
+          .attr("x",0)
+          .attr("dy",".35em")
+          .attr("transform","rotate(-90)")
+          .style("text-anchor", "end");
+
+  line_svg.append("path")
+          .datum(values)
+          .attr("class","line")
+          .attr("d",line);
+
+ var curtain = line_svg.append('rect')
+    .attr('x', -1 * line_width)
+    .attr('y', -1 * line_height)
+    .attr('height', line_height)
+    .attr('width', line_width)
+    .attr('class', 'curtain')
+    .attr('transform', 'rotate(180)')
+    .style('fill', '#ffffff');
+
+//---------------------------------------------------------------
+// Line Chart Ends
+//---------------------------------------------------------------
+ var playButton = svg.append("g")
+        .on("click",function(){
+          plotSolar();
+          plotLine();
+        }) ;
+      
+      playButton.append("rect")
+        .attr("class","button")
+        .attr("x",bX)
+        .attr("y",bY)
+        .attr("width",bWidth)
+        .attr("height",bHeight)
+        .attr("rx",rx) ;
+
+      playButton.append("text")
+        .attr("x",bX + bdx)
+        .attr("y",bY + bHeight/2)
+        .attr("fill","white")
+        .attr("stroke","none")
+        .attr("text-anchor","start")
+        .attr("alignment-baseline","central")
+        .classed("buttonText text",true)
+        .style('pointer-events', 'none')
+        .style("-webkit-user-select", "none")
+        .text("start") ;
+
+function plotLine(){
+  d3.select('.curtain').remove();
+
+    line_svg.append('rect')
+    .attr('x', -1 * line_width)
+    .attr('y', -1 * line_height)
+    .attr('height', line_height)
+    .attr('width', line_width)
+    .attr('class', 'curtain')
+    .attr('transform', 'rotate(180)')
+    .style('fill', '#ffffff');
+
+   var t = d3.select("#linesvg").transition()
+            .duration(20000)
+            .ease("linear");
+
+    t.select('rect.curtain')
+     .attr('width',0);
+  }
+      })
+    })
+})
+
+// Parse dates and numbers. We assume values are sorted by date.
+function type(d) {
+  d.date = parseTime(d.date);
+  d.number = +d.number;
+  return d;
+}
+
+function plotSolar() {
+  console.log("REACHED");
+  
+
+        var ii = -1 ;
+
+        solar.transition()
+            .duration(20000)
+            .ease("linear")
+            .attrTween("visibility",function(d, i, a){
+                return function(t) {
+                    if (ii !== t) {
+                        var cDate = new Date(dateInterp(t))
+                        textYear.text(cDate.getFullYear().toString()) ;
+                        textMonth.text(monthNames[cDate.getMonth()]) ; // + " " + cDate.getDate().toString()]) ;
+                        ii = t ;
+                    }
+
+                    if (d.completeddate <= dateInterp(t)) {
+                        return "visible" ;
+                    } else {
+                        return "hidden" ;
+                    }
+                }
+            })
+}
+
+
+
+
+</script>
