@@ -302,8 +302,6 @@ d3.json("oahu.json", function(error, oahu) {
             }
         })
 
-        console.log(data_island);
-
         data_island.map(function(d,i) {
             d.completeddate = +timeFormat.parse(d.completeddate);
             return d ;
