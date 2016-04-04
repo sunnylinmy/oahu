@@ -463,14 +463,15 @@ function plotLine(){
     .attr('width', line_width)
     .attr('class', 'curtain')
     .attr('transform', 'rotate(180)')
-    .style('fill', '#ffffff');
+    .style('fill', '#ffffff')
+    .transition().duration(20000).ease("linear").attr('width',0);
 
-   var t = d3.select("#linesvg").transition()
-            .duration(20000)
-            .ease("linear");
+  // var t = d3.select("#linesvg").transition()
+  //          .duration(20000)
+  //          .ease("linear");
 
-    t.select('rect.curtain')
-     .attr('width',0);
+   // t.select('rect.curtain')
+  //   .attr('width',0);
   }
       })
     })
