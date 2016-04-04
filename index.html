@@ -417,7 +417,7 @@ var line_xAxis = d3.svg.axis().orient("bottom").scale(line_x)
 //---------------------------------------------------------------
 // Line Chart Ends
 //---------------------------------------------------------------
-restart = 0;
+//restart = 0;
 
 var playButton = svg.append("g").attr("id","playButton");
 
@@ -445,16 +445,16 @@ var playButton = svg.append("g").attr("id","playButton");
  playButton.on("click",function(){
           plotSolar();
           plotLine();
-          restart = 1;
-          if (restart==1){
+          //restart = 1;
+          //if (restart==1){
               d3.select("#playButton rect").attr("width",bWidth+15);
               d3.select("#playButton text").text("restart");
-                    }
+          //          }
         }) ;
 
 
 function plotLine(){
-  d3.select('.curtain').remove();
+  d3.select('rect.curtain').remove();
 
     line_svg.append('rect')
     .attr('x', -0.995 * line_width)
