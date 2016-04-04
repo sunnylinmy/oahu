@@ -398,8 +398,8 @@ var line_xAxis = d3.svg.axis().orient("bottom").scale(line_x)
           .attr("d",line);
 
  var curtain = line_svg.append('rect')
-    .attr('x', -1 * line_width)
-    .attr('y', -1 * line_height)
+    .attr('x', -0.995 * line_width)
+    .attr('y', -0.997 * line_height)
     .attr('height', line_height)
     .attr('width', line_width)
     .attr('class', 'curtain')
@@ -457,8 +457,8 @@ function plotLine(){
   d3.select('.curtain').remove();
 
     line_svg.append('rect')
-    .attr('x', -1 * line_width)
-    .attr('y', -1 * line_height)
+    .attr('x', -0.995 * line_width)
+    .attr('y', -0.997 * line_height)
     .attr('height', line_height)
     .attr('width', line_width)
     .attr('class', 'curtain')
