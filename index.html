@@ -417,7 +417,7 @@ var line_xAxis = d3.svg.axis().orient("bottom").scale(line_x)
 //---------------------------------------------------------------
 // Line Chart Ends
 //---------------------------------------------------------------
-//restart = 0;
+restart = 0;
 
 var playButton = svg.append("g").attr("id","playButton");
 
@@ -446,10 +446,12 @@ var playButton = svg.append("g").attr("id","playButton");
           plotSolar();
           plotLine();
           //restart = 1;
-          //if (restart==1){
+          if (restart==0){
               d3.select("#playButton rect").attr("width",bWidth+15);
               d3.select("#playButton text").text("restart");
-          //          }
+          }else{
+              restart =1;
+          }
         }) ;
 
 
