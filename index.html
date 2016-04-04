@@ -345,7 +345,7 @@ d3.json("oahu.json", function(error, oahu) {
 // Line Chart
 //-----------------------------------------------------------------------
 var values = data.filter(function(d){
-    diff = d.date.getTime() - (new Date("1-Jan-2007")).getTime();
+    diff = d.date.getTime() - (new Date("2007-01-01")).getTime();
     if (diff>0){
       return d.date;
     }
@@ -357,7 +357,7 @@ line_y.domain([0,d3.max(values,function(d){return d.number;})]).nice();
 
 var line_xAxis = d3.svg.axis().orient("bottom").scale(line_x)
                  .tickValues([line_x.domain()[0],
-                              new Date("1-Jan-2011"),new Date("1-Jan-2013"),new Date("1-Jan-2015")])
+                              new Date(2011,0),new Date(2013,0),new Date(2015,0)])
                   .tickFormat(function(d){
                     return tickTimeFormat(d);
                   }),
