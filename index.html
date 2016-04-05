@@ -152,10 +152,10 @@ var path, geoData, color, solarData, projection, solar ;
 
 //--------------------------------------
 // Stuff for solar permit data
-// Date format from CSV file: "4/5/06 7:28"
+// Date format from CSV file: "4/5/2006 7:28"
 var timeFormat = d3.time.format("%m/%d/%Y %H:%M");
 
-var startDate = new Date(2008,0),
+var startDate = new Date(2008,2),
     endDate   = new Date(2015,0) ;
 
 var startNum = +startDate,
@@ -215,7 +215,7 @@ var tickTimeFormat = d3.time.format("%Y");
 
 
 d3.json("oahu.json", function(error, oahu) {
-  d3.csv("honolulu_matlab.csv", function(data_island) {
+  d3.csv("honolulu_matlab3.csv", function(data_island) {
     d3.csv("cumulativePermits_mengyang.csv",type,function(data){
 
       textYear.attr('visibility','visible') ;
@@ -354,6 +354,7 @@ var values = data.filter(function(d){
 line_x.domain([d3.min(values,function(d){return d.date;}),d3.max(values,function(d){return d.date;})]);
 line_y.domain([0,d3.max(values,function(d){return d.number;})]).nice();
 
+console.log(line_x.domain());
 
 var line_xAxis = d3.svg.axis().orient("bottom").scale(line_x)
                  .tickValues([line_x.domain()[0],
@@ -443,6 +444,8 @@ var playButton = svg.append("g").attr("id","playButton");
         .text("start") ;
 
  playButton.on("click",function(){
+          svg.selectAll(".circle").attr("visibility","hidden");
+
           plotSolar();
           plotLine();
           //restart = 1;
@@ -498,6 +501,7 @@ function plotSolar() {
             .attrTween("visibility",function(d, i, a){
                 return function(t) {
                     if (ii !== t) {
+                 //     console.log(Date(dateInterp(t)));
                         var cDate = new Date(dateInterp(t))
                         textYear.text(cDate.getFullYear().toString()) ;
                         textMonth.text(monthNames[cDate.getMonth()]) ; // + " " + cDate.getDate().toString()]) ;
