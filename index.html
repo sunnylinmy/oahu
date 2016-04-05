@@ -470,13 +470,9 @@ function plotLine(){
     .style('fill', '#ffffff')
     .transition().duration(20000).ease("linear").attr('width',0);
 
-  // var t = d3.select("#linesvg").transition()
-  //          .duration(20000)
-  //          .ease("linear");
-
-   // t.select('rect.curtain')
-  //   .attr('width',0);
   }
+
+  
       })
     })
 })
@@ -500,7 +496,6 @@ function plotSolar() {
             .attrTween("visibility",function(d, i, a){
                 return function(t) {
                     if (ii !== t) {
-                 //     console.log(Date(dateInterp(t)));
                         var cDate = new Date(dateInterp(t))
                         textYear.text(cDate.getFullYear().toString()) ;
                         textMonth.text(monthNames[cDate.getMonth()]) ; // + " " + cDate.getDate().toString()]) ;
