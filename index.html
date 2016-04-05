@@ -354,7 +354,6 @@ var values = data.filter(function(d){
 line_x.domain([d3.min(values,function(d){return d.date;}),d3.max(values,function(d){return d.date;})]);
 line_y.domain([0,d3.max(values,function(d){return d.number;})]).nice();
 
-console.log(line_x.domain());
 
 var line_xAxis = d3.svg.axis().orient("bottom").scale(line_x)
                  .tickValues([line_x.domain()[0],
